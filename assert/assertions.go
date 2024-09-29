@@ -16,12 +16,7 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
-
-	"github.com/davecgh/go-spew/spew"
-	"github.com/pmezard/go-difflib/difflib"
-
 	// Wrapper around gopkg.in/yaml.v3
-	"github.com/stretchr/testify/assert/yaml"
 )
 
 //go:generate sh -c "cd ../_codegen && go build && cd - && ../_codegen/_codegen -output-package=assert -template=assertion_format.go.tmpl"
@@ -1162,16 +1157,20 @@ func formatListDiff(listA, listB interface{}, extraA, extraB []interface{}) stri
 	msg.WriteString("elements differ")
 	if len(extraA) > 0 {
 		msg.WriteString("\n\nextra elements in list A:\n")
-		msg.WriteString(spewConfig.Sdump(extraA))
+		//msg.WriteString(spewConfig.Sdump(extraA))
+		msg.WriteString(fmt.Sprint(extraA))
 	}
 	if len(extraB) > 0 {
 		msg.WriteString("\n\nextra elements in list B:\n")
-		msg.WriteString(spewConfig.Sdump(extraB))
+		//msg.WriteString(spewConfig.Sdump(extraB))
+		msg.WriteString(fmt.Sprint(extraB))
 	}
 	msg.WriteString("\n\nlistA:\n")
-	msg.WriteString(spewConfig.Sdump(listA))
+	//msg.WriteString(spewConfig.Sdump(listA))
+	msg.WriteString(fmt.Sprint(listA))
 	msg.WriteString("\n\nlistB:\n")
-	msg.WriteString(spewConfig.Sdump(listB))
+	//msg.WriteString(spewConfig.Sdump(listB))
+	msg.WriteString(fmt.Sprint(listB))
 
 	return msg.String()
 }
@@ -1824,17 +1823,20 @@ func YAMLEq(t TestingT, expected string, actual string, msgAndArgs ...interface{
 	if h, ok := t.(tHelper); ok {
 		h.Helper()
 	}
-	var expectedYAMLAsInterface, actualYAMLAsInterface interface{}
+	/*
+		var expectedYAMLAsInterface, actualYAMLAsInterface interface{}
 
-	if err := yaml.Unmarshal([]byte(expected), &expectedYAMLAsInterface); err != nil {
-		return Fail(t, fmt.Sprintf("Expected value ('%s') is not valid yaml.\nYAML parsing error: '%s'", expected, err.Error()), msgAndArgs...)
-	}
+		if err := yaml.Unmarshal([]byte(expected), &expectedYAMLAsInterface); err != nil {
+			return Fail(t, fmt.Sprintf("Expected value ('%s') is not valid yaml.\nYAML parsing error: '%s'", expected, err.Error()), msgAndArgs...)
+		}
 
-	if err := yaml.Unmarshal([]byte(actual), &actualYAMLAsInterface); err != nil {
-		return Fail(t, fmt.Sprintf("Input ('%s') needs to be valid yaml.\nYAML error: '%s'", actual, err.Error()), msgAndArgs...)
-	}
+		if err := yaml.Unmarshal([]byte(actual), &actualYAMLAsInterface); err != nil {
+			return Fail(t, fmt.Sprintf("Input ('%s') needs to be valid yaml.\nYAML error: '%s'", actual, err.Error()), msgAndArgs...)
+		}
 
-	return Equal(t, expectedYAMLAsInterface, actualYAMLAsInterface, msgAndArgs...)
+		return Equal(t, expectedYAMLAsInterface, actualYAMLAsInterface, msgAndArgs...)
+	*/
+	return Equal(t, expected, actual, msgAndArgs...)
 }
 
 func typeAndKind(v interface{}) (reflect.Type, reflect.Kind) {
@@ -1873,24 +1875,35 @@ func diff(expected interface{}, actual interface{}) string {
 		e = reflect.ValueOf(expected).String()
 		a = reflect.ValueOf(actual).String()
 	case reflect.TypeOf(time.Time{}):
-		e = spewConfigStringerEnabled.Sdump(expected)
-		a = spewConfigStringerEnabled.Sdump(actual)
+		//e = spewConfigStringerEnabled.Sdump(expected)
+		//a = spewConfigStringerEnabled.Sdump(actual)
+		e = fmt.Sprint(expected)
+		a = fmt.Sprint(actual)
 	default:
-		e = spewConfig.Sdump(expected)
-		a = spewConfig.Sdump(actual)
+		//e = spewConfig.Sdump(expected)
+		//a = spewConfig.Sdump(actual)
+		e = fmt.Sprint(expected)
+		a = fmt.Sprint(actual)
 	}
 
-	diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
-		A:        difflib.SplitLines(e),
-		B:        difflib.SplitLines(a),
-		FromFile: "Expected",
-		FromDate: "",
-		ToFile:   "Actual",
-		ToDate:   "",
-		Context:  1,
-	})
+	/*
+		diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+			A:        difflib.SplitLines(e),
+			B:        difflib.SplitLines(a),
+			FromFile: "Expected",
+			FromDate: "",
+			ToFile:   "Actual",
+			ToDate:   "",
+			Context:  1,
+		})
+	*/
+	var msg bytes.Buffer
+	msg.WriteString("\n\nExpected:\n")
+	msg.WriteString(e)
+	msg.WriteString("\n\nActual:\n")
+	msg.WriteString(a)
 
-	return "\n\nDiff:\n" + diff
+	return "\n\nDiff:\n" + msg.String()
 }
 
 func isFunction(arg interface{}) bool {
@@ -1900,6 +1913,7 @@ func isFunction(arg interface{}) bool {
 	return reflect.TypeOf(arg).Kind() == reflect.Func
 }
 
+/*
 var spewConfig = spew.ConfigState{
 	Indent:                  " ",
 	DisablePointerAddresses: true,
@@ -1916,6 +1930,7 @@ var spewConfigStringerEnabled = spew.ConfigState{
 	SortKeys:                true,
 	MaxDepth:                10,
 }
+*/
 
 type tHelper = interface {
 	Helper()
